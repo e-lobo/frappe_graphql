@@ -6,21 +6,41 @@ import graphql
 from graphql import parse
 from graphql.error import GraphQLSyntaxError
 
+from .cache import GraphqlSchemaCache
 from .exceptions import GraphQLFileSyntaxError
 
+# memcached
 graphql_schemas = {}
 
 
 def get_schema():
+    """
+    Strategy
+    1. get from memcache
+    2. get from redis
+    3. build_schema
+    """
     global graphql_schemas
 
     if frappe.local.site in graphql_schemas:
         return graphql_schemas.get(frappe.local.site)
 
-    schema = graphql.build_schema(get_typedefs())
-    execute_schema_processors(schema=schema)
+    cache = GraphqlSchemaCache()
+    schema = cache.get_schema_from_redis()
+
+    if schema:
+        return schema
+
+    schema = build_graphql_schema()
 
     graphql_schemas[frappe.local.site] = schema
+    cache.set_schema_in_cache(schema)
+    return schema
+
+
+def build_graphql_schema():
+    schema = graphql.build_schema(get_typedefs())
+    execute_schema_processors(schema=schema)
     return schema
 
 

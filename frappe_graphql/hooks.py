@@ -180,3 +180,5 @@ override_whitelisted_methods = {
 # auto_cancel_exempted_doctypes = ["Auto Repeat"]
 
 clear_cache = "frappe_graphql.cache.clear_cache"
+
+after_migrate = 'frappe_graphql.migrate.after_migrate'
